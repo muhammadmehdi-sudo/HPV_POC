@@ -1,0 +1,226 @@
+# PLACEHOLDER CONTENT - NOT MEDICAL ADVICE.
+# Written by engineering only to exercise the bot. Replace with clinician-reviewed
+# units (same schema, POC_TECH_ANALYSIS.md §5.1) and point CONTENT_PATH at the new file.
+# Units with review.reviewer_id: null must start every text with the placeholder marker.
+#
+# Meta limits enforced on load: title <= 20 chars (button), text <= 1024 chars
+# (interactive body), at most 3 related_units (buttons per message).
+# Required system units: sys.greeting, sys.emergency, sys.out_of_scope.
+
+units:
+  - id: hpv.what_is
+    vaccine: hpv
+    intent: what_is
+    severity: normal
+    title: {en: "What is HPV?", ur: "ایچ پی وی کیا ہے؟", ur_roman: "HPV kya hai?"}
+    text:
+      en: "[PLACEHOLDER – not medical advice] HPV (human papillomavirus) is a common virus. Some types can cause cervical cancer later in life. The HPV vaccine protects against the types that cause most of these cancers."
+      ur: "[عارضی متن – طبی مشورہ نہیں] ایچ پی وی (ہیومن پیپلوما وائرس) ایک عام وائرس ہے۔ اس کی کچھ اقسام آگے چل کر بچہ دانی کے منہ کا کینسر پیدا کر سکتی ہیں۔ ایچ پی وی ویکسین ان اقسام سے بچاتی ہے جو زیادہ تر ایسے کینسر کا سبب بنتی ہیں۔"
+      ur_roman: "[PLACEHOLDER – tibbi mashwara nahi] HPV (human papillomavirus) aik aam virus hai. Is ki kuch qismein aage chal kar bachay daani ke munh ka cancer bana sakti hain. HPV vaccine un qismon se bachati hai jo zyada tar aise cancer ki wajah banti hain."
+    question_variants:
+      - {lang: en, text: "what is hpv"}
+      - {lang: en, text: "what is human papillomavirus"}
+      - {lang: en, text: "does hpv cause cancer"}
+      - {lang: ur, text: "ایچ پی وی کیا ہے"}
+      - {lang: ur, text: "ایچ پی وی وائرس کیا ہوتا ہے"}
+      - {lang: ur_roman, text: "hpv kya hai"}
+      - {lang: ur_roman, text: "hpv kya hota hai"}
+      - {lang: ur_roman, text: "kya hpv se cancer hota hai"}
+    related_units: [hpv.safety, hpv.eligibility_age]
+    sources: []
+    review: {reviewer_id: null, approved_at: null, valid_until: null}
+
+  - id: hpv.safety
+    vaccine: hpv
+    intent: safety
+    severity: normal
+    title: {en: "Is it safe?", ur: "کیا یہ محفوظ ہے؟", ur_roman: "Kya ye mehfooz hai?"}
+    text:
+      en: "[PLACEHOLDER – not medical advice] The HPV vaccine has been given to hundreds of millions of girls worldwide. Large studies and WHO reviews have found it to be safe."
+      ur: "[عارضی متن – طبی مشورہ نہیں] ایچ پی وی ویکسین دنیا بھر میں کروڑوں لڑکیوں کو لگائی جا چکی ہے۔ بڑی تحقیقات اور عالمی ادارہ صحت کے جائزوں کے مطابق یہ محفوظ ہے۔"
+      ur_roman: "[PLACEHOLDER – tibbi mashwara nahi] HPV vaccine duniya bhar mein karoron larkiyon ko lagayi ja chuki hai. Bari tehqeeqat aur WHO ke jaizon ke mutabiq ye mehfooz hai."
+    question_variants:
+      - {lang: en, text: "is the hpv vaccine safe"}
+      - {lang: en, text: "is hpv vaccine harmful"}
+      - {lang: en, text: "hpv vaccine safety"}
+      - {lang: ur, text: "کیا ایچ پی وی ویکسین محفوظ ہے"}
+      - {lang: ur, text: "کیا یہ ٹیکہ نقصان دہ ہے"}
+      - {lang: ur_roman, text: "kya hpv vaccine mehfooz hai"}
+      - {lang: ur_roman, text: "kya ye teeka safe hai"}
+      - {lang: ur_roman, text: "teeke se koi nuqsan to nahi"}
+    related_units: [hpv.side_effects, hpv.fertility_myth]
+    sources: []
+    review: {reviewer_id: null, approved_at: null, valid_until: null}
+
+  - id: hpv.fertility_myth
+    vaccine: hpv
+    intent: fertility_myth
+    severity: normal
+    title: {en: "Fertility myth", ur: "بانجھ پن کی افواہ", ur_roman: "Baanjh pan ki afwah"}
+    text:
+      en: "[PLACEHOLDER – not medical advice] The HPV vaccine does not cause infertility. Studies of millions of vaccinated women found no effect on their ability to have children."
+      ur: "[عارضی متن – طبی مشورہ نہیں] ایچ پی وی ویکسین سے بانجھ پن نہیں ہوتا۔ لاکھوں ویکسین شدہ خواتین پر تحقیق میں بچے پیدا کرنے کی صلاحیت پر کوئی اثر نہیں پایا گیا۔"
+      ur_roman: "[PLACEHOLDER – tibbi mashwara nahi] HPV vaccine se baanjh pan nahi hota. Lakhon vaccine shuda khawateen par tehqeeq mein bachay paida karne ki salahiyat par koi asar nahi paaya gaya."
+    question_variants:
+      - {lang: en, text: "does hpv vaccine cause infertility"}
+      - {lang: en, text: "can my daughter have children after the vaccine"}
+      - {lang: en, text: "hpv vaccine fertility"}
+      - {lang: ur, text: "کیا اس ویکسین سے بانجھ پن ہوتا ہے"}
+      - {lang: ur, text: "کیا ٹیکے سے بچے نہیں ہوتے"}
+      - {lang: ur_roman, text: "kya is se baanjh pan hota hai"}
+      - {lang: ur_roman, text: "kya teeke se bachay nahi hote"}
+      - {lang: ur_roman, text: "vaccine se banjh to nahi ho jati"}
+    related_units: [hpv.safety]
+    sources: []
+    review: {reviewer_id: null, approved_at: null, valid_until: null}
+
+  - id: hpv.eligibility_age
+    vaccine: hpv
+    intent: eligibility_age
+    severity: normal
+    title: {en: "Who should get it?", ur: "کس کو لگوانا چاہیے؟", ur_roman: "Kis ko lagwana hai?"}
+    text:
+      en: "[PLACEHOLDER – not medical advice] The vaccine is recommended for girls aged 9–14, ideally before they could be exposed to HPV. One dose gives strong protection."
+      ur: "[عارضی متن – طبی مشورہ نہیں] یہ ویکسین 9 سے 14 سال کی لڑکیوں کے لیے تجویز کی جاتی ہے، بہتر ہے کہ ایچ پی وی سے سامنا ہونے سے پہلے لگوائی جائے۔ ایک خوراک مضبوط تحفظ دیتی ہے۔"
+      ur_roman: "[PLACEHOLDER – tibbi mashwara nahi] Ye vaccine 9 se 14 saal ki larkiyon ke liye tajveez ki jati hai, behtar hai ke HPV se samna honay se pehle lagwayi jaye. Aik khurak mazboot tahaffuz deti hai."
+    question_variants:
+      - {lang: en, text: "who should get the hpv vaccine"}
+      - {lang: en, text: "what age for hpv vaccine"}
+      - {lang: en, text: "which girls can get the vaccine"}
+      - {lang: ur, text: "یہ ویکسین کس عمر میں لگتی ہے"}
+      - {lang: ur, text: "کن لڑکیوں کو یہ ٹیکہ لگوانا چاہیے"}
+      - {lang: ur_roman, text: "hpv vaccine kis umar mein lagti hai"}
+      - {lang: ur_roman, text: "kis ko lagwana chahiye"}
+      - {lang: ur_roman, text: "kitni umar ki larkiyon ko teeka lagta hai"}
+    related_units: [hpv.where_to_get, hpv.safety]
+    sources: []
+    review: {reviewer_id: null, approved_at: null, valid_until: null}
+
+  - id: hpv.side_effects
+    vaccine: hpv
+    intent: side_effects
+    severity: normal
+    title: {en: "Side effects", ur: "مضر اثرات", ur_roman: "Side effects"}
+    text:
+      en: "[PLACEHOLDER – not medical advice] Common side effects are mild and pass in 1–2 days: pain or redness where the injection was given, mild fever, or headache. Sitting for 15 minutes after the injection helps prevent dizziness."
+      ur: "[عارضی متن – طبی مشورہ نہیں] عام مضر اثرات معمولی ہوتے ہیں اور 1 سے 2 دن میں ختم ہو جاتے ہیں: ٹیکے کی جگہ درد یا سرخی، ہلکا بخار یا سر درد۔ ٹیکے کے بعد 15 منٹ بیٹھنے سے چکر آنے سے بچاؤ ہوتا ہے۔"
+      ur_roman: "[PLACEHOLDER – tibbi mashwara nahi] Aam side effects maamooli hotay hain aur 1 se 2 din mein khatam ho jatay hain: teeke ki jagah dard ya surkhi, halka bukhar ya sar dard. Teeke ke baad 15 minute baithne se chakkar aane se bachao hota hai."
+    question_variants:
+      - {lang: en, text: "what are the side effects of hpv vaccine"}
+      - {lang: en, text: "my arm hurts after the vaccine"}
+      - {lang: en, text: "fever after vaccine"}
+      - {lang: ur, text: "اس ویکسین کے مضر اثرات کیا ہیں"}
+      - {lang: ur, text: "ٹیکے کے بعد بخار"}
+      - {lang: ur_roman, text: "hpv vaccine ke side effects kya hain"}
+      - {lang: ur_roman, text: "teeke ke baad bukhar"}
+      - {lang: ur_roman, text: "teeka lagne ke baad bazu mein dard"}
+    related_units: [hpv.safety]
+    sources: []
+    review: {reviewer_id: null, approved_at: null, valid_until: null}
+
+  - id: hpv.where_to_get
+    vaccine: hpv
+    intent: where_to_get
+    severity: normal
+    title: {en: "Where to get it", ur: "کہاں سے لگوائیں؟", ur_roman: "Kahan lagwayein?"}
+    text:
+      en: "[PLACEHOLDER – not medical advice] The vaccine is free at government health centres and during school vaccination campaigns. Ask your nearest Lady Health Worker for dates and locations."
+      ur: "[عارضی متن – طبی مشورہ نہیں] یہ ویکسین سرکاری مراکز صحت پر اور اسکولوں میں ویکسینیشن مہم کے دوران مفت لگتی ہے۔ تاریخ اور جگہ کے لیے اپنی قریبی لیڈی ہیلتھ ورکر سے پوچھیں۔"
+      ur_roman: "[PLACEHOLDER – tibbi mashwara nahi] Ye vaccine sarkari marakiz-e-sehat par aur schoolon mein vaccination muhim ke dauran muft lagti hai. Tareekh aur jagah ke liye apni qareebi Lady Health Worker se poochein."
+    question_variants:
+      - {lang: en, text: "where can i get the hpv vaccine"}
+      - {lang: en, text: "is the vaccine free"}
+      - {lang: en, text: "nearest vaccination centre"}
+      - {lang: ur, text: "یہ ٹیکہ کہاں لگتا ہے"}
+      - {lang: ur, text: "کیا ویکسین مفت ہے"}
+      - {lang: ur_roman, text: "hpv vaccine kahan se lagwayein"}
+      - {lang: ur_roman, text: "teeka kahan lagta hai"}
+      - {lang: ur_roman, text: "kya vaccine free hai"}
+    related_units: [hpv.eligibility_age]
+    sources: []
+    review: {reviewer_id: null, approved_at: null, valid_until: null}
+
+  - id: sys.greeting
+    vaccine: hpv
+    intent: greeting
+    severity: normal
+    title: {en: "Hello", ur: "سلام", ur_roman: "Salam"}
+    text:
+      en: "[PLACEHOLDER – not medical advice] Hello! I answer questions about the HPV vaccine. Type your question or choose a topic below."
+      ur: "[عارضی متن – طبی مشورہ نہیں] السلام علیکم! میں ایچ پی وی ویکسین کے بارے میں سوالات کے جواب دیتا ہوں۔ اپنا سوال لکھیں یا نیچے سے موضوع منتخب کریں۔"
+      ur_roman: "[PLACEHOLDER – tibbi mashwara nahi] Assalam o Alaikum! Main HPV vaccine ke baare mein sawalon ke jawab deta hoon. Apna sawal likhein ya neeche se topic chunein."
+    question_variants:
+      - {lang: en, text: "hi"}
+      - {lang: en, text: "hello"}
+      - {lang: ur, text: "السلام علیکم"}
+      - {lang: ur, text: "سلام"}
+      - {lang: ur_roman, text: "assalam o alaikum"}
+      - {lang: ur_roman, text: "aoa"}
+    related_units: []
+    sources: []
+    review: {reviewer_id: null, approved_at: null, valid_until: null}
+
+  - id: sys.emergency
+    vaccine: hpv
+    intent: emergency
+    severity: emergency
+    title: {en: "Urgent help", ur: "فوری مدد", ur_roman: "Fori madad"}
+    text:
+      en: "[PLACEHOLDER – not medical advice] This may need urgent medical care. Please go to the nearest hospital now or call Rescue 1122."
+      ur: "[عارضی متن – طبی مشورہ نہیں] اس کے لیے فوری طبی امداد کی ضرورت ہو سکتی ہے۔ ابھی قریبی ہسپتال جائیں یا ریسکیو 1122 پر کال کریں۔"
+      ur_roman: "[PLACEHOLDER – tibbi mashwara nahi] Is ke liye fori tibbi imdad ki zaroorat ho sakti hai. Abhi qareebi hospital jayein ya Rescue 1122 par call karein."
+    question_variants: []
+    related_units: []
+    sources: []
+    review: {reviewer_id: null, approved_at: null, valid_until: null}
+
+  - id: sys.out_of_scope
+    vaccine: hpv
+    intent: out_of_scope
+    severity: normal
+    title: {en: "Topics", ur: "موضوعات", ur_roman: "Topics"}
+    text:
+      en: "[PLACEHOLDER – not medical advice] Sorry, I can only answer questions about the HPV vaccine. Choose a topic below."
+      ur: "[عارضی متن – طبی مشورہ نہیں] معذرت، میں صرف ایچ پی وی ویکسین کے بارے میں سوالات کا جواب دے سکتا ہوں۔ نیچے سے موضوع منتخب کریں۔"
+      ur_roman: "[PLACEHOLDER – tibbi mashwara nahi] Maazrat, main sirf HPV vaccine ke baare mein sawalon ka jawab de sakta hoon. Neeche se topic chunein."
+    question_variants: []
+    related_units: []
+    sources: []
+    review: {reviewer_id: null, approved_at: null, valid_until: null}
+
+# Fixed UI strings (not answer units).
+messages:
+  topics_button: {en: "Topics", ur: "موضوعات", ur_roman: "Topics"}
+  clarify: {en: "Did you mean one of these?", ur: "کیا آپ ان میں سے کچھ پوچھنا چاہتے ہیں؟", ur_roman: "Kya aap in mein se kuch poochna chahte hain?"}
+  voice_received: {en: "Voice note received. Voice answers are not enabled yet, please type your question.", ur: "آپ کا وائس نوٹ مل گیا۔ ابھی آواز سے جواب کی سہولت موجود نہیں، براہ کرم اپنا سوال لکھیں۔", ur_roman: "Aap ka voice note mil gaya. Abhi awaz se jawab ki sahulat nahi hai, apna sawal likh dein."}
+  unsupported: {en: "I can only read text and voice notes. Please type your question.", ur: "میں صرف تحریر اور وائس نوٹ پڑھ سکتا ہوں۔ براہ کرم اپنا سوال لکھیں۔", ur_roman: "Main sirf text aur voice note parh sakta hoon. Apna sawal likh dein."}
+
+# Spelling variants mapped to one concept token before matching. Multi-word entries are phrases.
+lexicon:
+  hpv: [hpv, "h p v", papillomavirus, "ایچ پی وی", "اچ پی وی"]
+  vaccine: [vaccine, vaccines, vacsin, vaksin, vacine, waxin, vaccination, vaccinate, vaccinated, teeka, tika, teeke, tike, teekay, tikay, injection, shot, jab, ٹیکہ, ٹیکے, ٹیکا, ویکسین, ویکسینیشن, انجکشن]
+  safe: [safe, safety, harmful, harm, mehfooz, mahfuz, mehfuz, mahfooz, nuqsan, nuksan, محفوظ, نقصان]
+  infertility: [infertility, infertile, fertility, sterile, sterility, baanjh, banjh, baanjhpan, banjhpan, بانجھ, بانجھپن]
+  children: [children, child, kids, bachay, bachey, bache, bacche, بچے, بچہ]
+  eligible: [who, eligible, eligibility, kis, kin, kisko, کس, کن]
+  age: [age, umar, umer, umr, عمر, saal, سال]
+  girl: [girl, girls, larki, larkiyan, larkiyon, لڑکی, لڑکیاں, لڑکیوں]
+  sideeffect: ["side effects", "side effect", sideeffects, asraat, asrat, اثرات, "مضر اثرات"]
+  fever: [fever, bukhar, بخار]
+  pain: [pain, hurts, hurt, dard, درد]
+  where: [where, kahan, kahaan, kaha, کہاں, centre, center, markaz, مرکز]
+  free: [free, muft, مفت]
+  cancer: [cancer, kansar, کینسر]
+  greet: [hi, hello, hey, salam, salaam, aoa, assalam, assalamualaikum, alaikum, walaikum, السلام, سلام, علیکم]
+  faint: [faint, fainted, fainting, unconscious, behosh, behoshi, behoosh, بےہوش, بیہوش, "بے ہوش", بےہوشی]
+  seizure: [seizure, seizures, fits, convulsion, convulsions, daura, dora, دورہ, دورے, jhatke, جھٹکے]
+  breathe: [breathe, breathing, breath, saans, sans, سانس]
+  swelling: [swelling, swollen, sujan, soojan, سوجن]
+  allergy: [allergy, allergic, allergies, الرجی]
+
+stopwords: [what, is, are, the, a, an, of, for, to, it, does, do, can, i, my, me, you, about, tell, will, should, this, that, in, "on", get, be, any, after, which,
+  kya, kia, hai, hain, hy, ka, ki, ke, ko, se, mein, main, me, ye, yeh, us, aur, bhi, to, hota, hoti, hote, koi, mujhe, meri, mera, beti, daughter, liye, ho, ap, aap, batao, bataen, plz, please, baad, lagne, lagta, lagti,
+  کیا, ہے, ہیں, کا, کی, کے, کو, سے, میں, یہ, وہ, اور, بھی, ہوتا, ہوتی, ہوتے, مجھے, میری, میرا, بیٹی, لیے, لئے, آپ, کوئی, ہو, اس, بعد]
+
+# Any of these (after lexicon mapping) escalates before retrieval. False positives are acceptable.
+danger_phrases: [faint, seizure, breathe, swelling, allergy, high fever, "tez bukhar", "تیز بخار", chest pain, "seene mein dard", "سینے میں درد"]

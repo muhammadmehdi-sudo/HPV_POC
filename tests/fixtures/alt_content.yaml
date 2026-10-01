@@ -1,0 +1,37 @@
+# Minimal reviewed content set: proves a different file loads with no code change.
+units:
+  - id: alt.safety
+    title: {en: "Safety", ur: "حفاظت", ur_roman: "Hifazat"}
+    text: {en: "Reviewed safety answer.", ur: "جائزہ شدہ جواب۔", ur_roman: "Jaiza shuda jawab."}
+    question_variants:
+      - {lang: en, text: "is the vaccine safe"}
+    related_units: []
+    review: {reviewer_id: dr_test, approved_at: 2026-10-01, valid_until: 2027-04-01}
+  - id: sys.greeting
+    title: {en: "Hello", ur: "سلام", ur_roman: "Salam"}
+    text: {en: "Hello.", ur: "سلام۔", ur_roman: "Salam."}
+    question_variants:
+      - {lang: en, text: "hello"}
+    related_units: []
+    review: {reviewer_id: dr_test, approved_at: 2026-10-01, valid_until: 2027-04-01}
+  - id: sys.emergency
+    title: {en: "Urgent", ur: "فوری", ur_roman: "Fori"}
+    text: {en: "Go to hospital.", ur: "ہسپتال جائیں۔", ur_roman: "Hospital jayein."}
+    question_variants: []
+    related_units: []
+    review: {reviewer_id: dr_test, approved_at: 2026-10-01, valid_until: 2027-04-01}
+  - id: sys.out_of_scope
+    title: {en: "Topics", ur: "موضوعات", ur_roman: "Topics"}
+    text: {en: "Vaccine questions only.", ur: "صرف ویکسین۔", ur_roman: "Sirf vaccine."}
+    question_variants: []
+    related_units: []
+    review: {reviewer_id: dr_test, approved_at: 2026-10-01, valid_until: 2027-04-01}
+messages:
+  topics_button: {en: "Topics", ur: "موضوعات", ur_roman: "Topics"}
+  clarify: {en: "Which one?", ur: "کون سا؟", ur_roman: "Kaun sa?"}
+  voice_received: {en: "Got it.", ur: "مل گیا۔", ur_roman: "Mil gaya."}
+  unsupported: {en: "Text only.", ur: "صرف تحریر۔", ur_roman: "Sirf text."}
+lexicon:
+  vaccine: [vaccine]
+stopwords: [is, the]
+danger_phrases: [faint]
