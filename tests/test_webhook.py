@@ -2,9 +2,12 @@ import hashlib
 import hmac
 import json
 
+import httpx
+import pytest
 from fastapi.testclient import TestClient
 
 import app
+import speech
 from conftest import APP_SECRET
 
 client = TestClient(app.app)
@@ -91,15 +94,45 @@ def test_list_reply_serves_unit(sent):
     assert "government health centres" in reply["interactive"]["body"]["text"]
 
 
-def test_voice_note_downloaded_then_text_and_voice_reply(sent):
-    post(envelope({"type": "audio", "audio": {"id": "MEDIA_IN", "mime_type": "audio/ogg; codecs=opus", "voice": True}}))
+VOICE_NOTE = {"type": "audio", "audio": {"id": "MEDIA_IN", "mime_type": "audio/ogg; codecs=opus", "voice": True}}
+
+
+def test_voice_note_answered_with_text_then_urdu_voice_note(sent, monkeypatch):
+    monkeypatch.setattr(speech, "transcribe", lambda audio: "kya hpv vaccine mehfooz hai")
+    app.AUDIO_DIR.mkdir()
+    (app.AUDIO_DIR / "hpv.safety.ur.ogg").write_bytes(b"OggS")
+    post(envelope(VOICE_NOTE))
     assert (app.DATA_DIR / "inbound" / "MEDIA_IN.ogg").read_bytes() == b"OggS-fake-audio"
     uploads = [body for path, body in sent if path == "PHONE1/media"]
     assert uploads == [{"messaging_product": "whatsapp", "type": "audio/ogg"}]
     first, second = messages_sent(sent)
-    assert first["type"] == "text"
+    assert first["interactive"]["body"]["text"].startswith("[PLACEHOLDER – tibbi mashwara nahi] HPV vaccine duniya")
     assert second == {"messaging_product": "whatsapp", "recipient_type": "individual", "to": USER,
                       "type": "audio", "audio": {"id": "MEDIA1", "voice": True}}
+    log = (app.DATA_DIR / "turns.jsonl").read_text(encoding="utf-8")
+    assert '"audio": "hpv.safety.ur.ogg"' in log and '"text": "kya hpv vaccine mehfooz hai"' in log
+
+
+def test_voice_note_without_rendered_audio_gets_text_only(sent, monkeypatch):
+    monkeypatch.setattr(speech, "transcribe", lambda audio: "is hpv vaccine safe")
+    post(envelope(VOICE_NOTE))
+    (reply,) = messages_sent(sent)
+    assert reply["interactive"]["body"]["text"].startswith("[PLACEHOLDER – not medical advice] The HPV vaccine")
+    assert [path for path, _ in sent if path == "PHONE1/media"] == []
+
+
+def failing_stt(audio):
+    raise httpx.HTTPStatusError("500", request=httpx.Request("POST", "https://stt"), response=httpx.Response(500))
+
+
+@pytest.mark.parametrize("stt", [lambda audio: "", failing_stt])
+def test_unclear_voice_note_gets_topic_list(sent, monkeypatch, stt):
+    monkeypatch.setattr(speech, "transcribe", stt)
+    post(envelope(VOICE_NOTE))
+    (reply,) = messages_sent(sent)
+    assert reply["interactive"]["type"] == "list"
+    assert reply["interactive"]["body"]["text"].startswith("Sorry, I could not understand")
+    assert '"action": "voice_unclear"' in (app.DATA_DIR / "turns.jsonl").read_text(encoding="utf-8")
 
 
 def test_unsupported_type_gets_explanation(sent):

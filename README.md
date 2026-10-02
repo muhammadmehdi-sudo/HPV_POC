@@ -9,14 +9,15 @@ Retrieval-only bot on Meta's WhatsApp Cloud API test number. It sends pre-approv
 | `app.py` | Webhook: verify handshake, HMAC signature check, dedupe, fast ack, background handling, `data/turns.jsonl` log |
 | `brain.py` | Content loading/validation, normalization + Roman Urdu lexicon, language ID, danger check, IDF-weighted trigram matching, decision |
 | `wa.py` | Graph API calls and message builders |
+| `speech.py` | ElevenLabs speech-to-text (voice notes in) and text-to-speech (answer audio) |
+| `render_audio.py` | Pre-renders `assets/audio/<unit>.<en|ur>.ogg` for every unit; rerun after content changes |
 | `content/hpv_placeholder.yaml` | Answer units, UI strings, lexicon, stopwords, danger phrases |
-| `assets/test_voice.ogg` | 5 s Opus tone used to test outbound voice notes |
 
 ## Scope
 
-In: text Q&A (EN / Urdu script / Roman Urdu), reply buttons and topic lists, danger-phrase escalation before retrieval, out-of-scope deflection, clarify on ambiguous questions, inbound voice-note download, outbound text + `voice:true` voice note back-to-back (Spike 4).
+In: text Q&A (EN / Urdu script / Roman Urdu), reply buttons and topic lists, danger-phrase escalation before retrieval, out-of-scope deflection, clarify on ambiguous questions, voice notes: download → ElevenLabs Scribe STT → same decision as text → text reply + pre-rendered answer voice note (`voice:true`, Spike 4).
 
-Deferred: Calling API (Spike 2), STT/TTS vendors (Spikes 1, 5), embeddings/pgvector (Spike 3 needs real units + eval set), Redis/queue, LLM, templates, HCW verification.
+Deferred: Calling API (Spike 2), STT/TTS vendor comparison and real-audio evaluation (Spikes 1, 5), embeddings/pgvector (Spike 3 needs real units + eval set), Redis/queue, LLM, templates, HCW verification.
 
 ## Run tests (no Meta account needed)
 
@@ -28,7 +29,7 @@ python -m pytest -q
 ## Manual test on the real test number
 
 1. **Meta app.** developers.facebook.com → Create app → Business → add the WhatsApp product. In WhatsApp → API Setup note the test number's *Phone number ID* and the temporary access token. Add your own phone under "To" and verify it (max 5 recipients). App settings → Basic → copy *App secret*.
-2. **Env.** `copy .env.example .env` and fill it in.
+2. **Env.** `copy .env.example .env` and fill it in. Then `python render_audio.py` to create the answer audio.
 3. **Run.**
    ```
    python -m uvicorn app:app --port 8000 --env-file .env
@@ -47,12 +48,15 @@ python -m pytest -q
    | `teeka lagne ke baad behosh ho gayi` | Emergency text (Rescue 1122); `escalation` line in `data/turns.jsonl` |
    | `cricket score` | Deflection + topic list |
    | A photo | "I can only read text and voice notes" + topic list |
-   | A voice note | File appears in `data/inbound/`; you get a text, then a **voice-note bubble with play icon** (not a file attachment); playing it logs a `played` status |
+   | A voice note asking a question (Urdu or English) | File appears in `data/inbound/`; you get the answer as text, then that answer as a **voice-note bubble with play icon**; the log line's `text` is the transcript and `audio` names the file sent; playing it logs a `played` status |
+   | A silent or noise-only voice note | "Could not understand the voice note" + topic list |
 
    Also confirm: typing indicator shows before replies, Urdu renders right-to-left, no rate-limit errors on the text + voice pair, and `download_lag_s` in the log is well under 300 s.
 
 ## Known limits
 
 - Retrieval is lexical (trigrams + lexicon). It handles the listed spelling variants but not unseen paraphrases; Spike 3 compares embeddings once real units exist.
-- State (dedupe, language preference, uploaded media id) is in memory; a restart forgets it. Run a single worker.
+- Urdu STT accuracy on real WhatsApp voice notes is unmeasured (Spike 1); verified only on synthetic speech. Speech detected as Hindi is re-transcribed as Urdu.
+- Answer audio uses a premade ElevenLabs voice (`speech.VOICE_ID`) and reads the placeholder marker aloud.
+- State (dedupe, language preference, uploaded media ids) is in memory; a restart forgets it. Run a single worker.
 - Users are keyed by phone (`from`); move to BSUID before production.

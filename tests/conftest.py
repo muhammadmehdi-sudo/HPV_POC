@@ -20,7 +20,8 @@ def sent(monkeypatch, tmp_path):
     monkeypatch.setattr(app, "DATA_DIR", tmp_path)
     monkeypatch.setattr(app, "seen_ids", type(app.seen_ids)())
     monkeypatch.setattr(app, "user_lang", {})
-    monkeypatch.setattr(app, "voice_media_id", None)
+    monkeypatch.setattr(app, "media_ids", {})
+    monkeypatch.setattr(app, "AUDIO_DIR", tmp_path / "audio")
     calls = []
 
     def fake_graph_post(path, json=None, data=None, files=None):

@@ -192,7 +192,7 @@ units:
 messages:
   topics_button: {en: "Topics", ur: "موضوعات", ur_roman: "Topics"}
   clarify: {en: "Did you mean one of these?", ur: "کیا آپ ان میں سے کچھ پوچھنا چاہتے ہیں؟", ur_roman: "Kya aap in mein se kuch poochna chahte hain?"}
-  voice_received: {en: "Voice note received. Voice answers are not enabled yet, please type your question.", ur: "آپ کا وائس نوٹ مل گیا۔ ابھی آواز سے جواب کی سہولت موجود نہیں، براہ کرم اپنا سوال لکھیں۔", ur_roman: "Aap ka voice note mil gaya. Abhi awaz se jawab ki sahulat nahi hai, apna sawal likh dein."}
+  voice_unclear: {en: "Sorry, I could not understand the voice note. Please try again or choose a topic.", ur: "معذرت، وائس نوٹ سمجھ نہیں آیا۔ دوبارہ کوشش کریں یا موضوع منتخب کریں۔", ur_roman: "Maazrat, voice note samajh nahi aaya. Dobara koshish karein ya topic chunein."}
   unsupported: {en: "I can only read text and voice notes. Please type your question.", ur: "میں صرف تحریر اور وائس نوٹ پڑھ سکتا ہوں۔ براہ کرم اپنا سوال لکھیں۔", ur_roman: "Main sirf text aur voice note parh sakta hoon. Apna sawal likh dein."}
 
 # Spelling variants mapped to one concept token before matching. Multi-word entries are phrases.

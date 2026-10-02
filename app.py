@@ -7,22 +7,24 @@ import time
 from collections import OrderedDict
 from pathlib import Path
 
+import httpx
 from fastapi import BackgroundTasks, FastAPI, Query, Request, Response
 from fastapi.responses import PlainTextResponse
 
 import brain
+import speech
 import wa
 
 ROOT = Path(__file__).parent
 DATA_DIR = ROOT / "data"
-TEST_VOICE = ROOT / "assets" / "test_voice.ogg"
+AUDIO_DIR = ROOT / "assets" / "audio"
 SEEN_MAX = 10_000
 UNSUPPORTED_TYPES = {"image", "video", "document", "sticker", "location", "contacts"}
 
 content = brain.Content(os.environ.get("CONTENT_PATH", ROOT / "content" / "hpv_placeholder.yaml"))
 seen_ids = OrderedDict()  # Meta retries undelivered webhooks; message ids make handling idempotent
 user_lang = {}  # TODO: key on BSUID once Meta sends it; phone may be omitted for username users
-voice_media_id = None  # uploaded once; Meta keeps uploads 30 days
+media_ids = {}  # audio filename -> uploaded media id; Meta keeps uploads 30 days
 
 app = FastAPI()
 
@@ -83,8 +85,25 @@ async def receive(request: Request, background_tasks: BackgroundTasks):
     return Response(status_code=200)
 
 
+def answer(user, text, msg_id):
+    """Reply to a typed or transcribed question; returns (turn fields, unit sent or None)."""
+    lang = user_lang[user] = brain.detect_lang(text) or user_lang.get(user, "en")
+    action, unit, ranked = content.decide(text)
+    if action == "escalate":
+        log_event("escalation", message_id=msg_id, text=text)
+        wa.send(user, wa.text(unit["text"][lang]))
+    elif action == "answer":
+        wa.send(user, unit_message(unit, lang))
+    elif action == "clarify":
+        candidates = [u for u, _ in ranked if not u["id"].startswith("sys.")][:3]
+        wa.send(user, menu_message(content.messages["clarify"][lang], candidates, lang))
+    else:  # greeting or deflect
+        wa.send(user, menu_message(unit["text"][lang], content.topics, lang))
+    return dict(text=text, lang=lang, action=action, unit=unit and unit["id"],
+                top=[(u["id"], round(s, 3)) for u, s in ranked[:3]]), unit
+
+
 def handle(msg):
-    global voice_media_id
     started = time.monotonic()
     user, kind = msg["from"], msg["type"]
     lang = user_lang.get(user, "en")
@@ -92,21 +111,7 @@ def handle(msg):
 
     if kind == "text":
         wa.mark_read(msg["id"])
-        text = msg["text"]["body"]
-        lang = user_lang[user] = brain.detect_lang(text) or lang
-        action, unit, ranked = content.decide(text)
-        if action == "escalate":
-            log_event("escalation", message_id=msg["id"], text=text)
-            wa.send(user, wa.text(unit["text"][lang]))
-        elif action == "answer":
-            wa.send(user, unit_message(unit, lang))
-        elif action == "clarify":
-            candidates = [u for u, _ in ranked if not u["id"].startswith("sys.")][:3]
-            wa.send(user, menu_message(content.messages["clarify"][lang], candidates, lang))
-        else:  # greeting or deflect
-            wa.send(user, menu_message(unit["text"][lang], content.topics, lang))
-        turn.update(text=text, lang=lang, action=action, unit=unit and unit["id"],
-                    top=[(u["id"], round(s, 3)) for u, s in ranked[:3]])
+        turn.update(answer(user, msg["text"]["body"], msg["id"])[0])
 
     elif kind == "interactive":
         reply = msg["interactive"]
@@ -121,13 +126,27 @@ def handle(msg):
         audio = wa.download_media(media_id)
         (DATA_DIR / "inbound").mkdir(parents=True, exist_ok=True)
         (DATA_DIR / "inbound" / f"{media_id}.ogg").write_bytes(audio)
-        # Spike 4: text then voice note back-to-back to the same user.
-        wa.send(user, wa.text(content.messages["voice_received"][lang]))
-        if voice_media_id is None:
-            voice_media_id = wa.upload_media(TEST_VOICE, "audio/ogg")
-        wa.send(user, wa.voice_note(voice_media_id))
-        turn.update(lang=lang, action="voice_placeholder", bytes=len(audio),
-                    download_lag_s=round(time.time() - int(msg["timestamp"]), 1))
+        turn.update(bytes=len(audio), download_lag_s=round(time.time() - int(msg["timestamp"]), 1))
+        stt_started = time.monotonic()
+        try:
+            transcript = speech.transcribe(audio)
+        except httpx.HTTPError as error:
+            log_event("stt_error", message_id=msg["id"], error=str(error))
+            transcript = ""
+        turn["stt_ms"] = round((time.monotonic() - stt_started) * 1000)
+        if not brain.detect_lang(transcript):
+            wa.send(user, menu_message(content.messages["voice_unclear"][lang], content.topics, lang))
+            turn.update(transcript=transcript, lang=lang, action="voice_unclear")
+        else:
+            fields, unit = answer(user, transcript, msg["id"])
+            turn.update(fields)
+            # Text then voice note back-to-back (Spike 4). Roman Urdu users hear the Urdu-script audio.
+            audio_file = unit and AUDIO_DIR / f"{unit['id']}.{'en' if fields['lang'] == 'en' else 'ur'}.ogg"
+            if audio_file and audio_file.exists():
+                if audio_file.name not in media_ids:
+                    media_ids[audio_file.name] = wa.upload_media(audio_file, "audio/ogg")
+                wa.send(user, wa.voice_note(media_ids[audio_file.name]))
+                turn["audio"] = audio_file.name
 
     elif kind in UNSUPPORTED_TYPES:
         wa.send(user, menu_message(content.messages["unsupported"][lang], content.topics, lang))
