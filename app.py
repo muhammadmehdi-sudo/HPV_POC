@@ -19,6 +19,8 @@ ROOT = Path(__file__).parent
 DATA_DIR = ROOT / "data"
 AUDIO_DIR = ROOT / "assets" / "audio"
 SEEN_MAX = 10_000
+STT_CONFIRM_BELOW = 0.80  # mean word confidence; placeholder until evaluate.py runs on real voice notes
+CONFIRM_PREFIX, MENU_ID = "confirm:", "menu"  # reply-button ids on the confirm-back message
 UNSUPPORTED_TYPES = {"image", "video", "document", "sticker", "location", "contacts"}
 
 content = brain.Content(os.environ.get("CONTENT_PATH", ROOT / "content" / "hpv_placeholder.yaml"))
@@ -103,6 +105,17 @@ def answer(user, text, msg_id):
                 top=[(u["id"], round(s, 3)) for u, s in ranked[:3]]), unit
 
 
+def send_voice_note(user, unit, lang):
+    """Answer audio after the text (Spike 4); Roman Urdu users hear the Urdu-script audio. Returns the file sent."""
+    audio_file = AUDIO_DIR / f"{unit['id']}.{'en' if lang == 'en' else 'ur'}.ogg"
+    if not audio_file.exists():
+        return None
+    if audio_file.name not in media_ids:
+        media_ids[audio_file.name] = wa.upload_media(audio_file, "audio/ogg")
+    wa.send(user, wa.voice_note(media_ids[audio_file.name]))
+    return audio_file.name
+
+
 def handle(msg):
     started = time.monotonic()
     user, kind = msg["from"], msg["type"]
@@ -115,10 +128,16 @@ def handle(msg):
 
     elif kind == "interactive":
         reply = msg["interactive"]
-        unit = content.units.get(reply.get(reply["type"], {}).get("id"))
+        reply_id = reply.get(reply["type"], {}).get("id", "")
+        confirmed = reply_id.startswith(CONFIRM_PREFIX)
+        unit = content.units.get(reply_id.removeprefix(CONFIRM_PREFIX))
         if unit:
             wa.send(user, unit_message(unit, lang))
-        turn.update(lang=lang, action="tap", unit=unit and unit["id"])
+            if confirmed:  # the question came as a voice note, so the answer does too
+                turn["audio"] = send_voice_note(user, unit, lang)
+        elif reply_id == MENU_ID:
+            wa.send(user, menu_message(content.messages["clarify"][lang], content.topics, lang))
+        turn.update(lang=lang, action="confirmed" if confirmed else "tap", unit=unit and unit["id"])
 
     elif kind == "audio":
         wa.mark_read(msg["id"])
@@ -129,24 +148,27 @@ def handle(msg):
         turn.update(bytes=len(audio), download_lag_s=round(time.time() - int(msg["timestamp"]), 1))
         stt_started = time.monotonic()
         try:
-            transcript = speech.transcribe(audio)
+            transcript, stt_conf = speech.transcribe(audio)
         except httpx.HTTPError as error:
             log_event("stt_error", message_id=msg["id"], error=str(error))
-            transcript = ""
-        turn["stt_ms"] = round((time.monotonic() - stt_started) * 1000)
+            transcript, stt_conf = "", 0.0
+        turn.update(stt_ms=round((time.monotonic() - stt_started) * 1000), stt_conf=round(stt_conf, 3))
+        action, unit, ranked = content.decide(transcript)
         if not brain.detect_lang(transcript):
             wa.send(user, menu_message(content.messages["voice_unclear"][lang], content.topics, lang))
             turn.update(transcript=transcript, lang=lang, action="voice_unclear")
+        elif action == "answer" and stt_conf < STT_CONFIRM_BELOW:  # escalations are never held back
+            lang = user_lang[user] = brain.detect_lang(transcript)
+            body = f"{content.messages['confirm'][lang]} {unit['title'][lang]}"
+            wa.send(user, wa.buttons(body, [(CONFIRM_PREFIX + unit["id"], content.messages["confirm_yes"][lang]),
+                                            (MENU_ID, content.messages["topics_button"][lang])]))
+            turn.update(text=transcript, lang=lang, action="confirm", unit=unit["id"],
+                        top=[(u["id"], round(s, 3)) for u, s in ranked[:3]])
         else:
             fields, unit = answer(user, transcript, msg["id"])
             turn.update(fields)
-            # Text then voice note back-to-back (Spike 4). Roman Urdu users hear the Urdu-script audio.
-            audio_file = unit and AUDIO_DIR / f"{unit['id']}.{'en' if fields['lang'] == 'en' else 'ur'}.ogg"
-            if audio_file and audio_file.exists():
-                if audio_file.name not in media_ids:
-                    media_ids[audio_file.name] = wa.upload_media(audio_file, "audio/ogg")
-                wa.send(user, wa.voice_note(media_ids[audio_file.name]))
-                turn["audio"] = audio_file.name
+            if unit:
+                turn["audio"] = send_voice_note(user, unit, fields["lang"])
 
     elif kind in UNSUPPORTED_TYPES:
         wa.send(user, menu_message(content.messages["unsupported"][lang], content.topics, lang))

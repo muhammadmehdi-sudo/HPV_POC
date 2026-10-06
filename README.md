@@ -9,8 +9,9 @@ Retrieval-only bot on Meta's WhatsApp Cloud API test number. It sends pre-approv
 | `app.py` | Webhook: verify handshake, HMAC signature check, dedupe, fast ack, background handling, `data/turns.jsonl` log |
 | `brain.py` | Content loading/validation, normalization + Roman Urdu lexicon, language ID, danger check, IDF-weighted trigram matching, decision |
 | `wa.py` | Graph API calls and message builders |
-| `speech.py` | ElevenLabs speech-to-text (voice notes in) and text-to-speech (answer audio) |
+| `speech.py` | ElevenLabs speech-to-text (voice notes in); text-to-speech for answer audio (Uplift for Urdu, ElevenLabs for English) |
 | `render_audio.py` | Pre-renders `assets/audio/<unit>.<en|ur>.ogg` for every unit; rerun after content changes |
+| `evaluate.py`, `eval/cases.yaml` | Confidence evaluation: runs labelled text/voice cases through STT + retrieval, sweeps thresholds, writes `data/eval_report.csv` |
 | `content/hpv_placeholder.yaml` | Answer units, UI strings, lexicon, stopwords, danger phrases |
 
 ## Scope
@@ -18,6 +19,12 @@ Retrieval-only bot on Meta's WhatsApp Cloud API test number. It sends pre-approv
 In: text Q&A (EN / Urdu script / Roman Urdu), reply buttons and topic lists, danger-phrase escalation before retrieval, out-of-scope deflection, clarify on ambiguous questions, voice notes: download → ElevenLabs Scribe STT → same decision as text → text reply + pre-rendered answer voice note (`voice:true`, Spike 4).
 
 Deferred: Calling API (Spike 2), STT/TTS vendor comparison and real-audio evaluation (Spikes 1, 5), embeddings/pgvector (Spike 3 needs real units + eval set), Redis/queue, LLM, templates, HCW verification.
+
+## Confidence checks
+
+- **STT:** mean word probability from Scribe (`stt_conf` in the log). A voice question that would be answered but scores below `STT_CONFIRM_BELOW` (app.py, 0.80 placeholder) gets a confirm-back ("Did you ask about: …?" with Yes / Topics) instead. Emergencies are never held back.
+- **Retrieval:** top score and margin (`top` in the log) decide answer / clarify / deflect (`brain.py` thresholds).
+- **Calibrate:** add real voice notes with labels to `eval/cases.yaml`, run `python evaluate.py`, pick thresholds from the sweep.
 
 ## Run tests (no Meta account needed)
 
@@ -49,6 +56,7 @@ python -m pytest -q
    | `cricket score` | Deflection + topic list |
    | A photo | "I can only read text and voice notes" + topic list |
    | A voice note asking a question (Urdu or English) | File appears in `data/inbound/`; you get the answer as text, then that answer as a **voice-note bubble with play icon**; the log line's `text` is the transcript and `audio` names the file sent; playing it logs a `played` status |
+   | A mumbled or noisy voice question | "Did you ask about: …?" with Yes / Topics; Yes sends the answer text + voice note |
    | A silent or noise-only voice note | "Could not understand the voice note" + topic list |
 
    Also confirm: typing indicator shows before replies, Urdu renders right-to-left, no rate-limit errors on the text + voice pair, and `download_lag_s` in the log is well under 300 s.
@@ -57,6 +65,6 @@ python -m pytest -q
 
 - Retrieval is lexical (trigrams + lexicon). It handles the listed spelling variants but not unseen paraphrases; Spike 3 compares embeddings once real units exist.
 - Urdu STT accuracy on real WhatsApp voice notes is unmeasured (Spike 1); verified only on synthetic speech. Speech detected as Hindi is re-transcribed as Urdu.
-- Answer audio uses a premade ElevenLabs voice (`speech.VOICE_ID`) and reads the placeholder marker aloud.
+- Answer audio: Urdu from Uplift (`speech.UPLIFT_VOICE_ID`, transcoded to Opus with ffmpeg), English from a premade ElevenLabs voice (`speech.VOICE_ID`). Both read the placeholder marker aloud.
 - State (dedupe, language preference, uploaded media ids) is in memory; a restart forgets it. Run a single worker.
 - Users are keyed by phone (`from`); move to BSUID before production.

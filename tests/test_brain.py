@@ -72,6 +72,7 @@ def test_ambiguous_clarifies(query):
 @pytest.mark.parametrize("text,lang", [
     ("Is the HPV vaccine safe?", "en"),
     ("کیا ایچ پی وی ویکسین محفوظ ہے؟", "ur"),
+    ("کیا HPV vaccine safe ہے؟", "ur"),
     ("kya hpv vaccine mehfooz hai", "ur_roman"),
     ("HPV ka vaccine safe hai kya?", "ur_roman"),
     ("123 ???", None),

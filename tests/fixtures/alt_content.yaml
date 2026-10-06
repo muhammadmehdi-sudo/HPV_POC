@@ -29,6 +29,8 @@ units:
 messages:
   topics_button: {en: "Topics", ur: "موضوعات", ur_roman: "Topics"}
   clarify: {en: "Which one?", ur: "کون سا؟", ur_roman: "Kaun sa?"}
+  confirm: {en: "You asked:", ur: "آپ نے پوچھا:", ur_roman: "Aap ne poocha:"}
+  confirm_yes: {en: "Yes", ur: "جی", ur_roman: "Jee"}
   voice_unclear: {en: "Say again?", ur: "دوبارہ؟", ur_roman: "Dobara?"}
   unsupported: {en: "Text only.", ur: "صرف تحریر۔", ur_roman: "Sirf text."}
 lexicon:

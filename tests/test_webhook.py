@@ -98,7 +98,7 @@ VOICE_NOTE = {"type": "audio", "audio": {"id": "MEDIA_IN", "mime_type": "audio/o
 
 
 def test_voice_note_answered_with_text_then_urdu_voice_note(sent, monkeypatch):
-    monkeypatch.setattr(speech, "transcribe", lambda audio: "kya hpv vaccine mehfooz hai")
+    monkeypatch.setattr(speech, "transcribe", lambda audio: ("kya hpv vaccine mehfooz hai", 0.95))
     app.AUDIO_DIR.mkdir()
     (app.AUDIO_DIR / "hpv.safety.ur.ogg").write_bytes(b"OggS")
     post(envelope(VOICE_NOTE))
@@ -114,7 +114,7 @@ def test_voice_note_answered_with_text_then_urdu_voice_note(sent, monkeypatch):
 
 
 def test_voice_note_without_rendered_audio_gets_text_only(sent, monkeypatch):
-    monkeypatch.setattr(speech, "transcribe", lambda audio: "is hpv vaccine safe")
+    monkeypatch.setattr(speech, "transcribe", lambda audio: ("is hpv vaccine safe", 0.95))
     post(envelope(VOICE_NOTE))
     (reply,) = messages_sent(sent)
     assert reply["interactive"]["body"]["text"].startswith("[PLACEHOLDER – not medical advice] The HPV vaccine")
@@ -125,7 +125,7 @@ def failing_stt(audio):
     raise httpx.HTTPStatusError("500", request=httpx.Request("POST", "https://stt"), response=httpx.Response(500))
 
 
-@pytest.mark.parametrize("stt", [lambda audio: "", failing_stt])
+@pytest.mark.parametrize("stt", [lambda audio: ("", 0.0), failing_stt])
 def test_unclear_voice_note_gets_topic_list(sent, monkeypatch, stt):
     monkeypatch.setattr(speech, "transcribe", stt)
     post(envelope(VOICE_NOTE))
@@ -133,6 +133,40 @@ def test_unclear_voice_note_gets_topic_list(sent, monkeypatch, stt):
     assert reply["interactive"]["type"] == "list"
     assert reply["interactive"]["body"]["text"].startswith("Sorry, I could not understand")
     assert '"action": "voice_unclear"' in (app.DATA_DIR / "turns.jsonl").read_text(encoding="utf-8")
+
+
+def test_low_confidence_voice_note_asks_to_confirm(sent, monkeypatch):
+    monkeypatch.setattr(speech, "transcribe", lambda audio: ("کیا HPV vaccine safe ہے؟", 0.6))
+    post(envelope(VOICE_NOTE))
+    (reply,) = messages_sent(sent)
+    assert reply["interactive"]["body"]["text"] == "کیا آپ نے اس بارے میں پوچھا: کیا یہ محفوظ ہے؟"
+    assert [b["reply"]["id"] for b in reply["interactive"]["action"]["buttons"]] == ["confirm:hpv.safety", "menu"]
+    assert '"action": "confirm"' in (app.DATA_DIR / "turns.jsonl").read_text(encoding="utf-8")
+
+
+def test_confirm_tap_sends_answer_text_then_voice_note(sent):
+    app.user_lang[USER] = "ur"
+    app.AUDIO_DIR.mkdir()
+    (app.AUDIO_DIR / "hpv.safety.ur.ogg").write_bytes(b"OggS")
+    tap = {"type": "interactive", "interactive": {"type": "button_reply", "button_reply": {"id": "confirm:hpv.safety", "title": "جی ہاں"}}}
+    post(envelope(tap))
+    text, voice = messages_sent(sent)
+    assert text["interactive"]["body"]["text"].startswith("[عارضی متن")
+    assert voice["audio"] == {"id": "MEDIA1", "voice": True}
+
+
+def test_topics_tap_after_confirm_sends_topic_list(sent):
+    tap = {"type": "interactive", "interactive": {"type": "button_reply", "button_reply": {"id": "menu", "title": "Topics"}}}
+    post(envelope(tap))
+    (reply,) = messages_sent(sent)
+    assert reply["interactive"]["type"] == "list" and reply["interactive"]["body"]["text"] == "Did you mean one of these?"
+
+
+def test_low_confidence_emergency_is_not_held_for_confirmation(sent, monkeypatch):
+    monkeypatch.setattr(speech, "transcribe", lambda audio: ("teeka lagne ke baad behosh ho gayi", 0.4))
+    post(envelope(VOICE_NOTE))
+    reply = messages_sent(sent)[0]
+    assert reply["type"] == "text" and "1122" in reply["text"]["body"]
 
 
 def test_unsupported_type_gets_explanation(sent):

@@ -35,7 +35,7 @@ def detect_lang(text):
     letters = [c for c in text if c.isalpha()]
     if not letters:
         return None
-    if sum("\u0600" <= c <= "\u06ff" for c in letters) / len(letters) > 0.3:
+    if any("\u0600" <= c <= "\u06ff" for c in letters):  # code-switched "\u06a9\u06cc\u0627 HPV vaccine safe \u06c1\u06d2\u061f" reads Urdu
         return "ur"
     return "ur_roman" if set(clean(text).split()) & ROMAN_URDU_MARKERS else "en"
 
